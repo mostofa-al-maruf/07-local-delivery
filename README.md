@@ -1,5 +1,5 @@
-# 07 Local Delivery — Hyperlocal Platform
-**Student Name:** Mahmud Mostofa Al Maruf  
+# 07 Local Delivery
+**Name:** Mahmud Mostofa Al Maruf  
 **Course:** CSE489 - Android App Development  
 **Milestone 1:** Database Schema & UI Wireframes
 
