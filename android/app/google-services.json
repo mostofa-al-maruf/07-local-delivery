@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "330945316904",
+    "project_id": "local-delivery-cse489",
+    "storage_bucket": "local-delivery-cse489.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:330945316904:android:d942128c8b237193ca8d1d",
+        "android_client_info": {
+          "package_name": "com.example.local_delivery_07"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1BP4NoGUlIDw8smah0XxbSYf4U77Eqb4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
