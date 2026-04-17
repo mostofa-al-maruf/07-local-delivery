@@ -8,7 +8,7 @@
 ## 📊 1. Database Schema (Firestore)
 The system uses a structured NoSQL database schema designed for real-time order tracking, hyperlocal shop discovery, and detailed commission management.
 
-![Schema](schema.png)
+![Schema](docs/schema.png)
 
 ---
 
@@ -17,16 +17,16 @@ Detailed layouts for Customer, Rider, and Admin interfaces showcasing the end-to
 
 ### A. Customer Application
 Focuses on ease of ordering, category-based shop browsing (Grocery, Pharmacy, etc.), and live GPS tracking on a map.
-![Customer UI 1](wireframe_customer_1.png)
-![Customer UI 2](wireframe_customer_2.png)
+![Customer UI 1](docs/wireframe_customer_1.png)
+![Customer UI 2](docs/wireframe_customer_2.png)
 
 ### B. Delivery Partner (Rider) App
 Designed for quick order acceptance, real-time navigation updates, and transparent earnings tracking.
-![Rider UI](wireframe_rider.png)
+![Rider UI](docs/wireframe_rider.png)
 
 ### C. Admin Web Dashboard
 A comprehensive panel for onboarding vendors, setting commission rates, and monitoring daily sales analytics.
-![Admin UI](wireframe_admin.png)
+![Admin UI](docs/wireframe_admin.png)
 
 ---
 
