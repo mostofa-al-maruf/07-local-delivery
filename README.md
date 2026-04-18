@@ -37,8 +37,6 @@ Beyond standard commerce, the app features a unique **Parcel Pickup** service, a
 
 ## 🚀 Milestone 1: Database Schema & UI Wireframes
 
----
-
 ## 📊 1. Database Schema (Firestore)
 The system uses a structured NoSQL database schema designed for real-time order tracking, hyperlocal shop discovery, and detailed commission management.
 
