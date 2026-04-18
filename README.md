@@ -5,6 +5,29 @@
 
 ---
 
+## 🚀 Milestone 2: Technical Implementation Breakdown
+
+### 1. Firebase Integration & Architecture
+- **Authentication:** Integrated **Firebase Phone Auth** with OTP logic, supporting both production SMS and Firebase Testing numbers for seamless demo environments.
+- **Database Design (Firestore):** Developed a scalable NoSQL schema using `users`, `shops`, and `orders` collections. Utilized **sub-collections** for product inventory to ensure a normalized and query-efficient structure.
+- **State Management:** Implemented **Provider (ChangeNotifier)** architecture to decouple business logic from the UI. Logic flows from dedicated services (`AuthService`, `ShopService`) to global providers.
+
+### 2. User Roles & Intelligent Routing
+- **Role-Based Access Control (RBAC):** Distinct workflows for `customer` and `rider` roles.
+- **Dynamic Navigation:** Post-verification, the app fetches the User document and intelligently routes the user to the correct dashboard based on their registered role.
+
+### 3. Customer Ecosystem & Cart Logic
+- **Live Inventory:** Data is fetched in real-time from Cloud Firestore, ensuring zero hardcoded shop/product data.
+- **Strict Single-Vendor Cart:** Implemented logic to restrict orders to one shop at a time to simplify delivery logistics. Adding items from a new shop triggers a cart reset prompt.
+- **Atomic Batch-Writes:** Integrated `submitOrder()` using atomic operations. The main order and all its sub-items are written to Firestore simultaneously to prevent data corruption.
+
+### 4. Technical Challenges & Edge Cases Solved
+- **Index Optimization:** Designed local Dart-side sorting (e.g., for `rating` or `placedAt`) to bypass Firebase's complex composite index requirements (`FAILED_PRECONDITION`).
+- **Exception Mapping:** Mapped Firebase backend exceptions to user-friendly UI SnackBars for clear feedback.
+- **Build System Fix:** Resolved Windows-Android build chain crashes by disabling `kotlin.incremental` caching.
+
+---
+
 ## 📊 1. Database Schema (Firestore)
 The system uses a structured NoSQL database schema designed for real-time order tracking, hyperlocal shop discovery, and detailed commission management.
 
