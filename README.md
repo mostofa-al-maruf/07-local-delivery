@@ -1,7 +1,14 @@
 # 07 Local Delivery
 **Name:** Mahmud Mostofa Al Maruf  
+**Student ID:** 22101132  
 **Course:** CSE489 - Android App Development  
-**Milestone 1:** Database Schema & UI Wireframes
+
+---
+
+## 📌 Project Overview
+**07 Local Delivery** is a specialized hyperlocal platform designed to bridge the gap between small-town vendors and local residents. Unlike generic delivery apps, this system focuses on essential daily commodities like **grocery, fish, meat, vegetables, and pharmacy items**, ensuring fresh delivery from the nearest trusted shops. 
+
+Beyond standard commerce, the app features a unique **Parcel Pickup** service, allowing users to move personal items across the city with real-time tracking. Built with a focus on scalability and role-based logistics, it empowers local businesses through a dedicated vendor ecosystem and a streamlined delivery partner network.
 
 ---
 
