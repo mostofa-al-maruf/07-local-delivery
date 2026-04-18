@@ -35,6 +35,10 @@ Beyond standard commerce, the app features a unique **Parcel Pickup** service, a
 
 ---
 
+**Milestone 1:** Database Schema & UI Wireframes
+
+---
+
 ## 📊 1. Database Schema (Firestore)
 The system uses a structured NoSQL database schema designed for real-time order tracking, hyperlocal shop discovery, and detailed commission management.
 
@@ -66,10 +70,3 @@ A comprehensive panel for onboarding vendors, setting commission rates, and moni
 - **Real-time Tracking:** Live GPS synchronization between Rider and Customer.
 - **Order Management:** Support for both standard shopping and **Parcel Pickup** services.
 - **Admin Control:** Role-based access for managing the entire delivery ecosystem.
-
----
-
-## 🚀 Next Steps (Milestone 2)
-- Implementation of Firebase Auth and Firestore Connection.
-- Home screen UI development with real-time data fetching.
-- Basic Cart and Order placement logic.
