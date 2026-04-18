@@ -35,7 +35,7 @@ Beyond standard commerce, the app features a unique **Parcel Pickup** service, a
 
 ---
 
-**Milestone 1:** Database Schema & UI Wireframes
+## 🚀 Milestone 1: Database Schema & UI Wireframes
 
 ---
 
