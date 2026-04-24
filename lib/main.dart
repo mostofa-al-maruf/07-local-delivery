@@ -26,7 +26,6 @@ import 'providers/order_provider.dart';
 
 import 'providers/rider_provider.dart';
 import 'services/notification_service.dart';
-import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,11 +46,8 @@ void main() async {
     // Seed Firestore with Demo Data (runs once to populate DB)
     await FirebaseSeeder.seedDemoData();
 
-    // Initialize FCM for push notifications
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser != null) {
-      await NotificationService().initialize(currentUser.uid);
-    }
+    // Initialize local notifications
+    await NotificationService().initialize();
   }
 
   runApp(const MyApp());

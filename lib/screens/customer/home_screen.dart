@@ -21,6 +21,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/shop_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/order_provider.dart';
 import '../../config/app_router.dart';
 import '../../config/app_theme.dart';
 import '../../services/auth_service.dart';
@@ -38,9 +39,13 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch all shops when screen loads
+    // Fetch all shops and start listening for order updates
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ShopProvider>().loadShops();
+      final uid = context.read<AuthProvider>().uid;
+      if (uid.isNotEmpty) {
+        context.read<OrderProvider>().startListeningToMyOrders(uid);
+      }
     });
   }
 
@@ -100,7 +105,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           : null,
                       child: AuthService().currentUser?.photoURL == null
                           ? Text(
-                              (authProvider.user?.name ?? 'U')[0].toUpperCase(),
+                              (authProvider.user?.name != null && authProvider.user!.name.isNotEmpty)
+                                  ? authProvider.user!.name[0].toUpperCase()
+                                  : 'U',
                               style: GoogleFonts.poppins(
                                 color: AppTheme.primaryColor,
                                 fontWeight: FontWeight.w600,
@@ -311,7 +318,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   : null,
               child: AuthService().currentUser?.photoURL == null
                   ? Text(
-                      (auth.user?.name ?? 'U')[0].toUpperCase(),
+                      (auth.user?.name != null && auth.user!.name.isNotEmpty)
+                          ? auth.user!.name[0].toUpperCase()
+                          : 'U',
                       style: GoogleFonts.poppins(
                           fontSize: 28, color: AppTheme.primaryColor),
                     )

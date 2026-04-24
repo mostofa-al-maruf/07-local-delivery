@@ -5,11 +5,14 @@
 /// In LIVE MODE: Submits to Firestore via OrderService.
 /// ============================================================
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/order_model.dart';
 import '../models/cart_item_model.dart';
 import '../services/order_service.dart';
+import '../services/notification_service.dart';
 import '../config/demo_data.dart';
 
 class OrderProvider extends ChangeNotifier {
@@ -114,5 +117,50 @@ class OrderProvider extends ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  /// ──────────────────────────────────────────────
+  /// Listen to real-time status changes for notifications (Customer)
+  /// ──────────────────────────────────────────────
+  StreamSubscription? _customerOrdersSub;
+  final Map<String, String> _knownOrderStatuses = {};
+
+  void startListeningToMyOrders(String customerId) {
+    if (DemoData.isDemoMode) return;
+    
+    _customerOrdersSub?.cancel();
+    _customerOrdersSub = FirebaseFirestore.instance
+        .collection('orders')
+        .where('customerId', isEqualTo: customerId)
+        .snapshots()
+        .listen((snapshot) {
+      for (var change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.modified || change.type == DocumentChangeType.added) {
+          final data = change.doc.data() as Map<String, dynamic>;
+          final orderId = data['orderId'] as String;
+          final currentStatus = data['status'] as String;
+          final previousStatus = _knownOrderStatuses[orderId];
+
+          // If status changed to a new state
+          if (previousStatus != null && previousStatus != currentStatus) {
+            if (currentStatus == 'accepted') {
+              NotificationService().notifyOrderAccepted(orderId);
+            } else if (currentStatus == 'picked_up') {
+              NotificationService().notifyOrderPickedUp(orderId);
+            } else if (currentStatus == 'delivered') {
+              NotificationService().notifyOrderDelivered(orderId);
+            }
+          }
+          
+          _knownOrderStatuses[orderId] = currentStatus;
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _customerOrdersSub?.cancel();
+    super.dispose();
   }
 }

@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/order_model.dart';
 import '../services/order_service.dart';
+import '../services/notification_service.dart';
 
 class RiderProvider extends ChangeNotifier {
   final OrderService _orderService = OrderService();
@@ -144,6 +145,10 @@ class RiderProvider extends ChangeNotifier {
     _pendingOrdersSub?.cancel();
     _pendingOrdersSub = _orderService.streamPendingOrders().listen(
       (orders) {
+        // Trigger notification if there are new orders and rider is not busy
+        if (orders.length > _pendingOrders.length && _activeOrder == null) {
+          NotificationService().notifyNewOrderAvailable(orders.length);
+        }
         _pendingOrders = orders;
         notifyListeners();
       },

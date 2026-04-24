@@ -34,6 +34,7 @@ dependencies:
   google_sign_in: ^6.2.1    # Google account login
   url_launcher: ^6.2.5      # Open phone dialer, URLs
   image_picker: ^1.0.7      # Pick photo from camera/gallery
+  flutter_local_notifications: ^17.0.0  # Local push notifications
 
   # Charts (Admin Dashboard)
   fl_chart: ^0.65.0          # Analytics charts
@@ -42,6 +43,13 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.1
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/app_logo.png"
+  min_sdk_android: 21
 
 flutter:
   uses-material-design: true
