@@ -83,6 +83,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           if (locationSnapshot.hasData && locationSnapshot.data != null) {
             final geo = locationSnapshot.data!;
             _riderPosition = LatLng(geo.latitude, geo.longitude);
+            
+            // Auto-pan the camera to follow the rider
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _mapController.move(_riderPosition, 14.0);
+            });
           }
 
           return _buildMapWidget(order);
