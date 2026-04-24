@@ -18,9 +18,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/order_model.dart';
 import '../services/order_service.dart';
 import '../services/notification_service.dart';
+import '../services/location_service.dart';
 
 class RiderProvider extends ChangeNotifier {
   final OrderService _orderService = OrderService();
+  final LocationService _locationService = LocationService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// ── State Variables ───────────────────────────
@@ -131,8 +133,10 @@ class RiderProvider extends ChangeNotifier {
       _loadRiderStats(riderId);
       _startListeningForOrders();
       _startListeningForActiveOrder(riderId);
+      _locationService.startTracking(riderId); // Start GPS tracking
     } else {
       _stopListening();
+      _locationService.stopTracking(); // Stop GPS tracking
       _pendingOrders = [];
       notifyListeners();
     }
