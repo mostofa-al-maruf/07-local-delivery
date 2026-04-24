@@ -144,4 +144,34 @@ class AuthService {
   Future<void> signOut() async {
     await _auth.signOut();
   }
+
+  // ══════════════════════════════════════════════
+  //  EMAIL/PASSWORD AUTH (Milestone 3 — Secondary Login)
+  // ══════════════════════════════════════════════
+
+  /// ──────────────────────────────────────────────
+  // Sign in with Email & Password
+  /// ──────────────────────────────────────────────
+  Future<UserCredential> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
+
+  /// ──────────────────────────────────────────────
+  // Register with Email & Password
+  /// ──────────────────────────────────────────────
+  Future<UserCredential> registerWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
 }

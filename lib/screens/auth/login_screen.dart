@@ -31,12 +31,18 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   String _selectedRole = 'customer'; // Toggle between customer and rider
+  bool _useEmailLogin = false; // Toggle between phone and email
+  bool _isRegisterMode = false; // Toggle between login and register
 
   @override
   void dispose() {
     _phoneController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -67,6 +73,53 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       },
     );
+  }
+
+  // Handles email login/register
+  void _handleEmailAuth() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final authProvider = context.read<AuthProvider>();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (_isRegisterMode) {
+      await authProvider.registerWithEmail(
+        email: email,
+        password: password,
+        role: _selectedRole,
+      );
+    } else {
+      await authProvider.signInWithEmail(
+        email: email,
+        password: password,
+        role: _selectedRole,
+      );
+    }
+
+    if (!mounted) return;
+    if (authProvider.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage!),
+          backgroundColor: AppTheme.errorRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else if (authProvider.isAuthenticated) {
+      if (authProvider.isNewUser) {
+        Navigator.pushReplacementNamed(context, AppRouter.profileSetup);
+      } else {
+        final role = authProvider.user?.role ?? 'customer';
+        if (role == 'rider') {
+          Navigator.pushReplacementNamed(context, AppRouter.riderHome);
+        } else if (role == 'admin') {
+          Navigator.pushReplacementNamed(context, AppRouter.adminDashboard);
+        } else {
+          Navigator.pushReplacementNamed(context, AppRouter.home);
+        }
+      }
+    }
   }
 
   @override
@@ -113,7 +166,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Enter your mobile number to continue',
+                      _useEmailLogin
+                          ? 'Sign in with your email address'
+                          : 'Enter your mobile number to continue',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppTheme.textMuted,
                           ),
@@ -136,43 +191,117 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 32),
 
-                    /// ── Phone Number Input ───────────
-                    Text(
-                      'Mobile Number',
-                      style: Theme.of(context).textTheme.titleMedium,
+                    /// ── Login Method Toggle ─────────
+                    Center(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildMethodTab('Phone', Icons.phone, !_useEmailLogin, () {
+                              setState(() => _useEmailLogin = false);
+                            }),
+                            _buildMethodTab('Email', Icons.email, _useEmailLogin, () {
+                              setState(() => _useEmailLogin = true);
+                            }),
+                          ],
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      maxLength: 10,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: InputDecoration(
-                        prefixIcon: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 14),
-                          child: Text(
-                            '+880',
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textDark,
+                    const SizedBox(height: 24),
+
+                    /// ── Conditional Input Fields ─────
+                    if (!_useEmailLogin) ...[
+                      /// ── Phone Number Input ───────────
+                      Text(
+                        'Mobile Number',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        maxLength: 10,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        decoration: InputDecoration(
+                          prefixIcon: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
+                            child: Text(
+                              '+880',
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textDark,
+                              ),
                             ),
                           ),
+                          hintText: '1XXXXXXXXX',
+                          counterText: '',
                         ),
-                        hintText: '1XXXXXXXXX',
-                        counterText: '',
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter your phone number';
+                          }
+                          if (value.trim().length != 10) {
+                            return 'Enter a valid 10-digit number';
+                          }
+                          return null;
+                        },
                       ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your phone number';
-                        }
-                        if (value.trim().length != 10) {
-                          return 'Enter a valid 10-digit number';
-                        }
-                        return null;
-                      },
-                    ),
+                    ] else ...[
+                      /// ── Email Input ───────────────────
+                      Text(
+                        'Email Address',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(Icons.email_outlined),
+                          hintText: 'your@email.com',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter your email';
+                          }
+                          if (!value.contains('@') || !value.contains('.')) {
+                            return 'Enter a valid email address';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      /// ── Password Input ────────────────
+                      Text(
+                        'Password',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(Icons.lock_outline),
+                          hintText: '••••••',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter your password';
+                          }
+                          if (value.trim().length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
                     const SizedBox(height: 16),
 
                     /// ── Error Message ────────────────
@@ -200,12 +329,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     const SizedBox(height: 24),
 
-                    /// ── Send OTP Button ──────────────
+                    /// ── Action Button ──────────────
                     SizedBox(
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: auth.isLoading ? null : _handleSendOTP,
+                        onPressed: auth.isLoading
+                            ? null
+                            : (_useEmailLogin ? _handleEmailAuth : _handleSendOTP),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.accentOrange,
                         ),
@@ -219,9 +350,29 @@ class _LoginScreenState extends State<LoginScreen> {
                                       Colors.white),
                                 ),
                               )
-                            : const Text('Send OTP →'),
+                            : Text(_useEmailLogin
+                                ? (_isRegisterMode ? 'Create Account →' : 'Sign In →')
+                                : 'Send OTP →'),
                       ),
                     ),
+
+                    /// ── Toggle Register/Login for Email ──
+                    if (_useEmailLogin) ...[
+                      const SizedBox(height: 16),
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            setState(() => _isRegisterMode = !_isRegisterMode);
+                          },
+                          child: Text(
+                            _isRegisterMode
+                                ? 'Already have an account? Sign In'
+                                : "Don't have an account? Register",
+                            style: TextStyle(color: AppTheme.primaryColor),
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 24),
 
                     /// ── Terms ────────────────────────
@@ -238,6 +389,31 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  // Builds a login method tab (Phone / Email)
+  Widget _buildMethodTab(String label, IconData icon, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: isSelected ? Colors.white : AppTheme.textMuted),
+            const SizedBox(width: 8),
+            Text(label, style: TextStyle(
+              color: isSelected ? Colors.white : AppTheme.textMuted,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            )),
+          ],
         ),
       ),
     );

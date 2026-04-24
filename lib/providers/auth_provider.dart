@@ -223,4 +223,72 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
+
+  // ══════════════════════════════════════════════
+  //  EMAIL/PASSWORD AUTH (Milestone 3)
+  // ══════════════════════════════════════════════
+
+  /// ──────────────────────────────────────────────
+  // Sign in with Email & Password
+  /// ──────────────────────────────────────────────
+  Future<void> signInWithEmail({
+    required String email,
+    required String password,
+    String? role,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    if (role != null) _selectedRole = role;
+    notifyListeners();
+
+    try {
+      await _authService.signInWithEmail(email: email, password: password);
+      await _handlePostAuth();
+    } on FirebaseAuthException catch (e) {
+      _errorMessage = switch (e.code) {
+        'user-not-found' => 'No account found with this email.',
+        'wrong-password' => 'Incorrect password.',
+        'invalid-email' => 'Invalid email address.',
+        _ => e.message ?? 'Login failed.',
+      };
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Login failed: $e';
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// ──────────────────────────────────────────────
+  // Register with Email & Password
+  /// ──────────────────────────────────────────────
+  Future<void> registerWithEmail({
+    required String email,
+    required String password,
+    String? role,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    if (role != null) _selectedRole = role;
+    notifyListeners();
+
+    try {
+      await _authService.registerWithEmail(email: email, password: password);
+      await _handlePostAuth();
+    } on FirebaseAuthException catch (e) {
+      _errorMessage = switch (e.code) {
+        'email-already-in-use' => 'This email is already registered.',
+        'weak-password' => 'Password is too weak (min 6 characters).',
+        'invalid-email' => 'Invalid email address.',
+        _ => e.message ?? 'Registration failed.',
+      };
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Registration failed: $e';
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

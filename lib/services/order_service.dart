@@ -132,4 +132,103 @@ class OrderService {
           return list;
         });
   }
+
+  // ══════════════════════════════════════════════
+  //  RIDER WORKFLOW METHODS (Milestone 3)
+  // ══════════════════════════════════════════════
+
+  /// ──────────────────────────────────────────────
+  // Stream pending orders for riders to pick up
+  /// ──────────────────────────────────────────────
+  // Returns a real-time stream of orders with status 'pending'
+  // that have not yet been assigned to any rider.
+  Stream<List<OrderModel>> streamPendingOrders() {
+    return _firestore
+        .collection('orders')
+        .where('status', isEqualTo: 'pending')
+        .snapshots()
+        .map((snapshot) {
+          var list = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
+          list.sort((a, b) => b.placedAt.compareTo(a.placedAt));
+          return list;
+        });
+  }
+
+  /// ──────────────────────────────────────────────
+  // Accept an order — assign rider to it
+  /// ──────────────────────────────────────────────
+  // Sets riderId, riderName, riderPhone and changes status to 'accepted'.
+  Future<void> acceptOrder({
+    required String orderId,
+    required String riderId,
+    required String riderName,
+    required String riderPhone,
+  }) async {
+    await _firestore.collection('orders').doc(orderId).update({
+      'riderId': riderId,
+      'riderName': riderName,
+      'riderPhone': riderPhone,
+      'status': 'accepted',
+      'acceptedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// ──────────────────────────────────────────────
+  // Update order status (Accepted → Picked Up → Delivered)
+  /// ──────────────────────────────────────────────
+  Future<void> updateOrderStatus(String orderId, String newStatus) async {
+    final Map<String, dynamic> updateData = {
+      'status': newStatus,
+    };
+    // Mark delivery timestamp when delivered
+    if (newStatus == 'delivered') {
+      updateData['deliveredAt'] = FieldValue.serverTimestamp();
+      updateData['paymentStatus'] = 'paid';
+    }
+    await _firestore.collection('orders').doc(orderId).update(updateData);
+  }
+
+  /// ──────────────────────────────────────────────
+  // Stream the rider's currently active order
+  /// ──────────────────────────────────────────────
+  // Returns a real-time stream of the single order assigned to this rider.
+  Stream<OrderModel?> streamRiderActiveOrder(String riderId) {
+    return _firestore
+        .collection('orders')
+        .where('riderId', isEqualTo: riderId)
+        .where('status', whereIn: ['accepted', 'picked_up'])
+        .snapshots()
+        .map((snapshot) {
+          if (snapshot.docs.isEmpty) return null;
+          return OrderModel.fromFirestore(snapshot.docs.first);
+        });
+  }
+
+  /// ──────────────────────────────────────────────
+  // Stream a single order by ID (for customer tracking)
+  /// ──────────────────────────────────────────────
+  Stream<OrderModel?> streamOrderById(String orderId) {
+    return _firestore
+        .collection('orders')
+        .doc(orderId)
+        .snapshots()
+        .map((doc) {
+          if (!doc.exists) return null;
+          return OrderModel.fromFirestore(doc);
+        });
+  }
+
+  /// ──────────────────────────────────────────────
+  // Fetch all orders (Admin Dashboard)
+  /// ──────────────────────────────────────────────
+  Stream<List<OrderModel>> streamAllOrders() {
+    return _firestore
+        .collection('orders')
+        .snapshots()
+        .map((snapshot) {
+          var list = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
+          list.sort((a, b) => b.placedAt.compareTo(a.placedAt));
+          return list;
+        });
+  }
 }

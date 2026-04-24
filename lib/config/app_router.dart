@@ -18,6 +18,8 @@ import '../screens/customer/checkout_screen.dart';
 import '../screens/customer/order_confirmation_screen.dart';
 import '../screens/customer/order_history_screen.dart';
 import '../screens/rider/rider_home_screen.dart';
+import '../screens/customer/order_tracking_screen.dart';
+import '../screens/admin/admin_dashboard.dart';
 
 class AppRouter {
   /// ── Route Names ───────────────────────────────
@@ -32,6 +34,8 @@ class AppRouter {
   static const String checkout = '/checkout';
   static const String orderConfirmation = '/order-confirmation';
   static const String orderHistory = '/order-history';
+  static const String orderTracking = '/order-tracking';
+  static const String adminDashboard = '/admin-dashboard';
 
   /// ── Route Map ─────────────────────────────────
   static Map<String, WidgetBuilder> get routes {
@@ -47,6 +51,24 @@ class AppRouter {
       checkout: (_) => const CheckoutScreen(),
       orderConfirmation: (_) => const OrderConfirmationScreen(),
       orderHistory: (_) => const OrderHistoryScreen(),
+      adminDashboard: (_) => const AdminDashboard(),
     };
+  }
+
+  /// ── onGenerateRoute (for screens needing arguments) ──
+  static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+    switch (settings.name) {
+      case orderTracking:
+        final orderId = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (_) => OrderTrackingScreen(orderId: orderId),
+        );
+      default:
+        return MaterialPageRoute(
+          builder: (_) => const Scaffold(
+            body: Center(child: Text('Page not found')),
+          ),
+        );
+    }
   }
 }

@@ -1,3 +1,12 @@
+/// ============================================================
+/// rider_home_screen.dart — Rider Dashboard (Milestone 3)
+/// ============================================================
+/// Full rider workflow with real Firestore data:
+///   1. Go Online → Listen for pending orders
+///   2. New order alert → Accept/Decline
+///   3. Active delivery → Picked Up → Delivered
+/// ============================================================
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -111,7 +120,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
                     children: [
                       _buildMetricsRow(riderInfo),
                       const SizedBox(height: 24),
-                      _buildOnlineToggle(riderInfo),
+                      _buildOnlineToggle(riderInfo, user?.uid ?? ''),
                     ],
                   ),
                 ),
@@ -120,14 +129,15 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
                   child: riderInfo.isOnline
                       ? (riderInfo.isOrderAccepted
                           ? _buildActiveDeliveryView(riderInfo)
-                          : _buildSearchingRadar())
+                          : _buildSearchingRadar(riderInfo))
                       : _buildOfflineState(),
                 ),
               ],
             ),
 
             // Incoming Request Modal Overlay
-            if (riderInfo.hasIncomingRequest) _buildIncomingRequestModal(riderInfo),
+            if (riderInfo.hasIncomingRequest && !riderInfo.isOrderAccepted)
+              _buildIncomingRequestModal(riderInfo),
           ],
         ),
       ),
@@ -138,7 +148,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildMetricCard('Earnings', '৳${riderInfo.earningsToday}', Icons.account_balance_wallet, AppTheme.successGreen),
+        _buildMetricCard('Earnings', '৳${riderInfo.earningsToday.toStringAsFixed(0)}', Icons.account_balance_wallet, AppTheme.successGreen),
         _buildMetricCard('Deliveries', '${riderInfo.totalDeliveries}', Icons.local_shipping, AppTheme.primaryColor),
         _buildMetricCard('Rating', '${riderInfo.rating} ★', Icons.star, AppTheme.warningAmber),
       ],
@@ -147,7 +157,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
 
   Widget _buildMetricCard(String title, String value, IconData icon, Color color) {
     return Container(
-      width: (MediaQuery.of(context).size.width - 72) / 3, // evenly spaced
+      width: (MediaQuery.of(context).size.width - 72) / 3,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
@@ -177,9 +187,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
     );
   }
 
-  Widget _buildOnlineToggle(RiderProvider riderInfo) {
+  Widget _buildOnlineToggle(RiderProvider riderInfo, String riderId) {
     return GestureDetector(
-      onTap: () => riderInfo.toggleOnlineStatus(!riderInfo.isOnline),
+      onTap: () => riderInfo.toggleOnlineStatus(!riderInfo.isOnline, riderId),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         height: 60,
@@ -262,7 +272,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
     );
   }
 
-  Widget _buildSearchingRadar() {
+  Widget _buildSearchingRadar(RiderProvider riderInfo) {
+    final pendingCount = riderInfo.pendingOrders.length;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -271,24 +282,21 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
             alignment: Alignment.center,
             children: [
               Container(
-                width: 200,
-                height: 200,
+                width: 200, height: 200,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: AppTheme.accentOrange.withValues(alpha: 0.2), width: 2),
                 ),
               ),
               Container(
-                width: 140,
-                height: 140,
+                width: 140, height: 140,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: AppTheme.accentOrange.withValues(alpha: 0.3), width: 2),
                 ),
               ),
               Container(
-                width: 80,
-                height: 80,
+                width: 80, height: 80,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: AppTheme.accentOrange.withValues(alpha: 0.1),
@@ -302,8 +310,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
                   return Transform.rotate(
                     angle: _radarController.value * 2 * math.pi,
                     child: Container(
-                      width: 200,
-                      height: 200,
+                      width: 200, height: 200,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: SweepGradient(
@@ -323,11 +330,13 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
           ),
           const SizedBox(height: 32),
           Text(
-            'Searching for nearby orders...',
+            pendingCount > 0
+                ? '$pendingCount order(s) available nearby!'
+                : 'Searching for nearby orders...',
             style: GoogleFonts.poppins(
               fontSize: 16,
               fontWeight: FontWeight.w500,
-              color: AppTheme.primaryColor,
+              color: pendingCount > 0 ? AppTheme.successGreen : AppTheme.primaryColor,
             ),
           ),
         ],
@@ -336,8 +345,12 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
   }
 
   Widget _buildIncomingRequestModal(RiderProvider riderInfo) {
+    final order = riderInfo.pendingOrders.first;
+    final user = context.read<AuthProvider>().user;
+    final timeAgo = DateTime.now().difference(order.placedAt).inMinutes;
+
     return Container(
-      color: Colors.black54, // Dim background
+      color: Colors.black54,
       child: Center(
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -357,8 +370,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 60,
-                height: 60,
+                width: 60, height: 60,
                 decoration: BoxDecoration(
                   color: AppTheme.warningAmber.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
@@ -368,17 +380,21 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
               const SizedBox(height: 16),
               Text(
                 'New Delivery Request!',
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${timeAgo}m ago • Order #${order.orderId.substring(0, 6)}',
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
               ),
               const SizedBox(height: 24),
-              _buildRequestDetailRow(Icons.store, 'Pick up', 'Haque Store (Grocery)'),
+              _buildRequestDetailRow(Icons.store, 'Pick up', order.shopName),
               const SizedBox(height: 12),
-              _buildRequestDetailRow(Icons.location_on, 'Drop off', 'Block C, Road 2, Banani'),
+              _buildRequestDetailRow(Icons.location_on, 'Drop off', order.deliveryAddress),
               const SizedBox(height: 12),
-              _buildRequestDetailRow(Icons.payments, 'Earning', '৳40.00'),
+              _buildRequestDetailRow(Icons.payments, 'Earning', '৳${order.deliveryFee.toStringAsFixed(0)}'),
+              const SizedBox(height: 12),
+              _buildRequestDetailRow(Icons.shopping_bag, 'Total Bill', '৳${order.totalAmount.toStringAsFixed(0)}'),
               const SizedBox(height: 32),
               Row(
                 children: [
@@ -389,7 +405,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
                         side: BorderSide(color: Colors.grey.shade300),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      onPressed: () => riderInfo.rejectOrder(),
+                      onPressed: () => riderInfo.skipOrder(order.orderId),
                       child: const Text('Decline', style: TextStyle(color: AppTheme.textDark)),
                     ),
                   ),
@@ -402,8 +418,17 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
-                      onPressed: () => riderInfo.acceptOrder(),
-                      child: const Text('Accept', style: TextStyle(fontWeight: FontWeight.bold)),
+                      onPressed: riderInfo.isLoading ? null : () {
+                        riderInfo.acceptOrder(
+                          orderId: order.orderId,
+                          riderId: user!.uid,
+                          riderName: user.name,
+                          riderPhone: user.phone,
+                        );
+                      },
+                      child: riderInfo.isLoading
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Text('Accept', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -420,18 +445,25 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
       children: [
         Icon(icon, color: AppTheme.textMuted, size: 20),
         const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
-            Text(value, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+              Text(value, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+            ],
+          ),
         ),
       ],
     );
   }
 
+  /// ════════════════════════════════════════════════
+  ///  ACTIVE DELIVERY VIEW (Status Progression)
+  /// ════════════════════════════════════════════════
   Widget _buildActiveDeliveryView(RiderProvider riderInfo) {
+    final order = riderInfo.activeOrder!;
+
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -442,36 +474,170 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
             style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          Expanded(
-            child: Container(
+
+          // Order Info Card
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppTheme.cardWhite,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Order #${order.orderId.substring(0, 6)}',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+                    _buildStatusBadge(order.status),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildOrderInfoRow(Icons.store, 'Shop', order.shopName),
+                const SizedBox(height: 10),
+                _buildOrderInfoRow(Icons.person, 'Customer', order.customerName),
+                const SizedBox(height: 10),
+                _buildOrderInfoRow(Icons.phone, 'Phone', order.customerPhone),
+                const SizedBox(height: 10),
+                _buildOrderInfoRow(Icons.location_on, 'Address', order.deliveryAddress),
+                const SizedBox(height: 10),
+                _buildOrderInfoRow(Icons.payments, 'Collect (COD)', '৳${order.totalAmount.toStringAsFixed(0)}'),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Status Timeline
+          _buildStatusTimeline(order.status),
+
+          const Spacer(),
+
+          // Action Button
+          if (riderInfo.nextStatusAction.isNotEmpty)
+            SizedBox(
               width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: const Center(
-                child: Text('Map Integration Placeholder\n(Will be added in Milestone 3)', 
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppTheme.textMuted)),
+              height: 56,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: order.status == 'picked_up'
+                      ? AppTheme.successGreen
+                      : AppTheme.primaryColor,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                onPressed: riderInfo.isLoading ? null : () async {
+                  await riderInfo.progressOrderStatus();
+                  if (riderInfo.activeOrder == null && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('🎉 Delivery completed! Great job!'),
+                        backgroundColor: AppTheme.successGreen,
+                      ),
+                    );
+                  }
+                },
+                child: riderInfo.isLoading
+                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : Text(riderInfo.nextStatusAction, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              onPressed: () => riderInfo.completeOrder(),
-              child: const Text('Mark as Delivered'),
-            ),
-          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    final color = switch (status) {
+      'accepted' => AppTheme.warningAmber,
+      'picked_up' => AppTheme.primaryColor,
+      'delivered' => AppTheme.successGreen,
+      _ => AppTheme.textMuted,
+    };
+    final label = switch (status) {
+      'accepted' => 'Accepted',
+      'picked_up' => 'Picked Up',
+      'delivered' => 'Delivered',
+      _ => status,
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+    );
+  }
+
+  Widget _buildOrderInfoRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: AppTheme.textMuted),
+        const SizedBox(width: 10),
+        Text('$label: ', style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+        Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
+      ],
+    );
+  }
+
+  Widget _buildStatusTimeline(String currentStatus) {
+    final steps = ['accepted', 'picked_up', 'delivered'];
+    final currentIndex = steps.indexOf(currentStatus);
+
+    return Row(
+      children: List.generate(steps.length, (index) {
+        final isCompleted = index <= currentIndex;
+        final isCurrent = index == currentIndex;
+        final label = switch (steps[index]) {
+          'accepted' => 'Accepted',
+          'picked_up' => 'Picked Up',
+          'delivered' => 'Delivered',
+          _ => steps[index],
+        };
+
+        return Expanded(
+          child: Row(
+            children: [
+              Column(
+                children: [
+                  Container(
+                    width: 28, height: 28,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isCompleted ? AppTheme.successGreen : Colors.grey.shade300,
+                      border: isCurrent
+                          ? Border.all(color: AppTheme.successGreen, width: 3)
+                          : null,
+                    ),
+                    child: isCompleted
+                        ? const Icon(Icons.check, size: 16, color: Colors.white)
+                        : null,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(label, style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                    color: isCompleted ? AppTheme.textDark : AppTheme.textMuted,
+                  )),
+                ],
+              ),
+              if (index < steps.length - 1)
+                Expanded(
+                  child: Container(
+                    height: 2,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    color: index < currentIndex ? AppTheme.successGreen : Colors.grey.shade300,
+                  ),
+                ),
+            ],
+          ),
+        );
+      }),
     );
   }
 }

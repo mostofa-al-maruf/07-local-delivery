@@ -63,7 +63,15 @@ class _SplashScreenState extends State<SplashScreen>
       if (authProvider.isNewUser) {
         Navigator.pushReplacementNamed(context, AppRouter.profileSetup);
       } else {
-        Navigator.pushReplacementNamed(context, AppRouter.home);
+        // Route based on user role
+        final role = authProvider.user?.role ?? 'customer';
+        if (role == 'rider') {
+          Navigator.pushReplacementNamed(context, AppRouter.riderHome);
+        } else if (role == 'admin') {
+          Navigator.pushReplacementNamed(context, AppRouter.adminDashboard);
+        } else {
+          Navigator.pushReplacementNamed(context, AppRouter.home);
+        }
       }
     } else {
       Navigator.pushReplacementNamed(context, AppRouter.login);
