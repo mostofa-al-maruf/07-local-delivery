@@ -194,6 +194,7 @@ class AuthProvider extends ChangeNotifier {
       uid: _authService.currentUser!.uid,
       phone: userPhone,
       name: name,
+      email: _authService.currentUser!.email ?? '',
       role: _selectedRole,
       address: address,
     );
