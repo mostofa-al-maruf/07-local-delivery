@@ -2,7 +2,7 @@
 **Name:** Mahmud Mostofa Al Maruf  
 **Student ID:** 22101132  
 **Course:** CSE489 - Android App Development  
-**Platform:** Flutter + Firebase (Firestore, Auth, FCM)
+**Platform:** Flutter + Firebase (Firestore, Auth, FCM, Google Sign-In)
 ---
 
 ## 📋 Table of Contents
@@ -44,7 +44,7 @@
 **Pattern:** Service-Provider Architecture  
 **State Management:** Provider (ChangeNotifier)  
 **Database:** Cloud Firestore (NoSQL)  
-**Authentication:** Firebase Phone Auth + Email/Password  
+**Authentication:** Firebase Phone Auth + Google Sign-In  
 **Maps:** OpenStreetMap via `flutter_map`  
 **Push Notifications:** Firebase Cloud Messaging (FCM)
 
@@ -75,16 +75,18 @@ flutter run -d chrome
 
 ### Firebase Setup
 1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable **Phone Authentication** and **Email/Password** in Authentication
+2. Enable **Phone Authentication** and **Google Sign-In** in Authentication
 3. Create a **Cloud Firestore** database
 4. Run `flutterfire configure` to generate `firebase_options.dart`
 5. Add test phone number in Firebase Console → Authentication → Phone → Testing
+6. For Google Sign-In: Add **SHA-1** fingerprint in Project Settings → Android app
 
 ### Test Credentials
 | Type | Value |
 |------|-------|
 | Phone | `+8801797837210` |
 | OTP | `123456` |
+| Google | Any Google account |
 
 ---
 
@@ -108,7 +110,7 @@ lib/
 │   └── order_model.dart              # Full order with status tracking
 │
 ├── services/
-│   ├── auth_service.dart              # Firebase Auth (Phone OTP + Email)
+│   ├── auth_service.dart              # Firebase Auth (Phone OTP + Google)
 │   ├── shop_service.dart              # Firestore shop queries
 │   ├── product_service.dart           # Firestore product sub-collection
 │   ├── order_service.dart             # Atomic batch writes, order streams
@@ -126,7 +128,7 @@ lib/
 ├── screens/
 │   ├── splash_screen.dart             # Role-based routing on launch
 │   ├── auth/
-│   │   ├── login_screen.dart          # Phone/Email dual login
+│   │   ├── login_screen.dart          # Phone OTP + Google Sign-In
 │   │   ├── otp_screen.dart            # 6-digit OTP verification
 │   │   └── profile_setup_screen.dart  # New user onboarding
 │   ├── customer/
@@ -170,6 +172,7 @@ lib/
 
 ### 1. Firebase Integration
 - **Phone Auth** with OTP (Firebase Testing Numbers for demos)
+- **Google Sign-In** as secondary login (one-tap, no password needed)
 - **Firestore** with `users`, `shops`, `orders` collections
 - **Provider** architecture for state management
 
@@ -209,11 +212,11 @@ lib/
 - Foreground & background message handlers
 - Status-specific notification text (Accepted, Picked Up, Delivered)
 
-### 5. Secondary Email Login
-- **Phone + Email** dual authentication
-- Toggle UI on login screen between Phone OTP and Email/Password
-- Register/Sign-in modes with validation
-- Cost-optimized: Email auth is free on Firebase (no SMS charges)
+### 5. Google Sign-In (Secondary Login)
+- **One-tap login** with Google account picker
+- Firebase credential created from Google OAuth tokens
+- Role selection preserved (Customer/Rider) before Google sign-in
+- Seamless: No password needed, just pick a Google account
 
 ---
 
@@ -236,7 +239,7 @@ lib/
 | Package | Purpose |
 |---------|---------|
 | `firebase_core` | Firebase initialization |
-| `firebase_auth` | Phone + Email authentication |
+| `firebase_auth` | Phone + Google authentication |
 | `cloud_firestore` | NoSQL database |
 | `flutter_local_notifications` | Push notifications |
 | `provider` | State management |
@@ -244,6 +247,7 @@ lib/
 | `latlong2` | Lat/Lng coordinates |
 | `geolocator` | GPS location |
 | `fl_chart` | Analytics charts |
+| `google_sign_in` | Google account login |
 | `google_fonts` | Custom typography |
 | `pinput` | OTP input UI |
 | `intl` | Date formatting |

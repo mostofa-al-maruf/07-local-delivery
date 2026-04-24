@@ -154,6 +154,10 @@ class AuthProvider extends ChangeNotifier {
     _user = await _authService.getUserProfile(uid);
     _isAuthenticated = true;
     _isNewUser = _user == null;
+
+    // Existing user: use their saved role from Firestore (no role switching)
+    // New user: _selectedRole will be used during profile creation
+
     _isLoading = false;
     notifyListeners();
   }
@@ -164,14 +168,18 @@ class AuthProvider extends ChangeNotifier {
   Future<void> createProfile({
     required String name,
     String address = '',
+    String phone = '',
   }) async {
     _isLoading = true;
     notifyListeners();
 
+    // Use provided phone, or fall back to OTP phone number
+    final userPhone = phone.isNotEmpty ? phone : _phoneNumber;
+
     if (DemoData.isDemoMode) {
       _user = UserModel(
         uid: 'demo_user_001',
-        phone: _phoneNumber,
+        phone: userPhone,
         name: name,
         role: _selectedRole,
         address: address,
@@ -184,7 +192,7 @@ class AuthProvider extends ChangeNotifier {
 
     final newUser = UserModel(
       uid: _authService.currentUser!.uid,
-      phone: _phoneNumber,
+      phone: userPhone,
       name: name,
       role: _selectedRole,
       address: address,
@@ -224,69 +232,43 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ══════════════════════════════════════════════
-  //  EMAIL/PASSWORD AUTH (Milestone 3)
-  // ══════════════════════════════════════════════
-
-  /// ──────────────────────────────────────────────
-  // Sign in with Email & Password
-  /// ──────────────────────────────────────────────
-  Future<void> signInWithEmail({
-    required String email,
-    required String password,
-    String? role,
-  }) async {
-    _isLoading = true;
-    _errorMessage = null;
-    if (role != null) _selectedRole = role;
+  /// Update the locally cached user model (after profile edit)
+  void updateLocalUser(UserModel updatedUser) {
+    _user = updatedUser;
     notifyListeners();
-
-    try {
-      await _authService.signInWithEmail(email: email, password: password);
-      await _handlePostAuth();
-    } on FirebaseAuthException catch (e) {
-      _errorMessage = switch (e.code) {
-        'user-not-found' => 'No account found with this email.',
-        'wrong-password' => 'Incorrect password.',
-        'invalid-email' => 'Invalid email address.',
-        _ => e.message ?? 'Login failed.',
-      };
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _errorMessage = 'Login failed: $e';
-      _isLoading = false;
-      notifyListeners();
-    }
   }
 
+  /// Cancel any stuck loading state
+  void cancelLoading() {
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // ══════════════════════════════════════════════
+  //  GOOGLE SIGN-IN (Milestone 3)
+  // ══════════════════════════════════════════════
+
   /// ──────────────────────────────────────────────
-  // Register with Email & Password
+  // Sign in with Google Account
   /// ──────────────────────────────────────────────
-  Future<void> registerWithEmail({
-    required String email,
-    required String password,
-    String? role,
-  }) async {
+  Future<void> signInWithGoogle({String? role}) async {
     _isLoading = true;
     _errorMessage = null;
     if (role != null) _selectedRole = role;
     notifyListeners();
 
     try {
-      await _authService.registerWithEmail(email: email, password: password);
+      await _authService.signInWithGoogle();
       await _handlePostAuth();
-    } on FirebaseAuthException catch (e) {
-      _errorMessage = switch (e.code) {
-        'email-already-in-use' => 'This email is already registered.',
-        'weak-password' => 'Password is too weak (min 6 characters).',
-        'invalid-email' => 'Invalid email address.',
-        _ => e.message ?? 'Registration failed.',
-      };
-      _isLoading = false;
-      notifyListeners();
     } catch (e) {
-      _errorMessage = 'Registration failed: $e';
+      final msg = e.toString();
+      // User cancelled or pressed back — not an error, just reset
+      if (msg.contains('cancelled') || msg.contains('canceled') || msg.contains('null')) {
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+      _errorMessage = 'Google Sign-In failed: $msg';
       _isLoading = false;
       notifyListeners();
     }

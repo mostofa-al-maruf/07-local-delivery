@@ -20,6 +20,7 @@ import '../screens/customer/order_history_screen.dart';
 import '../screens/rider/rider_home_screen.dart';
 import '../screens/customer/order_tracking_screen.dart';
 import '../screens/admin/admin_dashboard.dart';
+import '../screens/profile_screen.dart';
 
 class AppRouter {
   /// ── Route Names ───────────────────────────────
@@ -36,6 +37,7 @@ class AppRouter {
   static const String orderHistory = '/order-history';
   static const String orderTracking = '/order-tracking';
   static const String adminDashboard = '/admin-dashboard';
+  static const String profile = '/profile';
 
   /// ── Route Map ─────────────────────────────────
   static Map<String, WidgetBuilder> get routes {
@@ -52,6 +54,7 @@ class AppRouter {
       orderConfirmation: (_) => const OrderConfirmationScreen(),
       orderHistory: (_) => const OrderHistoryScreen(),
       adminDashboard: (_) => const AdminDashboard(),
+      profile: (_) => const ProfileScreen(),
     };
   }
 

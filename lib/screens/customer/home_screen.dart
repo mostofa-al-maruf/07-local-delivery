@@ -23,6 +23,7 @@ import '../../providers/shop_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../config/app_router.dart';
 import '../../config/app_theme.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/shop_card.dart';
 import '../../widgets/category_card.dart';
 
@@ -94,13 +95,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: CircleAvatar(
                       radius: 18,
                       backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                      child: Text(
-                        (authProvider.user?.name ?? 'U')[0].toUpperCase(),
-                        style: GoogleFonts.poppins(
-                          color: AppTheme.primaryColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      backgroundImage: AuthService().currentUser?.photoURL != null
+                          ? NetworkImage(AuthService().currentUser!.photoURL!)
+                          : null,
+                      child: AuthService().currentUser?.photoURL == null
+                          ? Text(
+                              (authProvider.user?.name ?? 'U')[0].toUpperCase(),
+                              style: GoogleFonts.poppins(
+                                color: AppTheme.primaryColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            )
+                          : null,
                     ),
                   ),
                 ],
@@ -300,11 +306,16 @@ class _HomeScreenState extends State<HomeScreen> {
             CircleAvatar(
               radius: 36,
               backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-              child: Text(
-                (auth.user?.name ?? 'U')[0].toUpperCase(),
-                style: GoogleFonts.poppins(
-                    fontSize: 28, color: AppTheme.primaryColor),
-              ),
+              backgroundImage: AuthService().currentUser?.photoURL != null
+                  ? NetworkImage(AuthService().currentUser!.photoURL!)
+                  : null,
+              child: AuthService().currentUser?.photoURL == null
+                  ? Text(
+                      (auth.user?.name ?? 'U')[0].toUpperCase(),
+                      style: GoogleFonts.poppins(
+                          fontSize: 28, color: AppTheme.primaryColor),
+                    )
+                  : null,
             ),
             const SizedBox(height: 12),
             Text(auth.user?.name ?? 'User',
@@ -312,6 +323,14 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(auth.user?.phone ?? '',
                 style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 24),
+            ListTile(
+              leading: const Icon(Icons.edit, color: AppTheme.primaryColor),
+              title: const Text('Edit Profile'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRouter.profile);
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.receipt_long),
               title: const Text('My Orders'),

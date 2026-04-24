@@ -1,40 +1,28 @@
 /// ============================================================
-/// order_history_screen.dart — Order History Screen
+/// order_history_screen.dart — Order History (Real-time)
 /// ============================================================
-/// Displays all past and active orders for the logged-in customer.
-/// Each order card shows: order ID, shop name, items count,
-/// total amount, status badge, and placed time.
+/// Displays all orders for the logged-in customer using
+/// StreamBuilder for real-time Firestore updates.
+/// When rider changes status → customer sees it instantly.
 /// ============================================================
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/order_provider.dart';
 import '../../models/order_model.dart';
 import '../../config/app_router.dart';
 import '../../config/app_theme.dart';
 
-class OrderHistoryScreen extends StatefulWidget {
+class OrderHistoryScreen extends StatelessWidget {
   const OrderHistoryScreen({super.key});
 
   @override
-  State<OrderHistoryScreen> createState() => _OrderHistoryScreenState();
-}
-
-class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final uid = context.read<AuthProvider>().uid;
-      context.read<OrderProvider>().loadOrderHistory(uid);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final uid = context.read<AuthProvider>().uid;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Orders'),
@@ -44,13 +32,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               context, AppRouter.home, (route) => false),
         ),
       ),
-      body: Consumer<OrderProvider>(
-        builder: (context, orderProv, _) {
-          if (orderProv.isLoading) {
+      body: StreamBuilder<QuerySnapshot>(
+        // Real-time stream — updates instantly when rider changes status
+        stream: FirebaseFirestore.instance
+            .collection('orders')
+            .where('customerId', isEqualTo: uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (orderProv.orders.isEmpty) {
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -73,11 +66,17 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             );
           }
 
+          // Parse and sort orders
+          final orders = snapshot.data!.docs
+              .map((doc) => OrderModel.fromFirestore(doc))
+              .toList();
+          orders.sort((a, b) => b.placedAt.compareTo(a.placedAt));
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: orderProv.orders.length,
+            itemCount: orders.length,
             itemBuilder: (context, index) {
-              return _buildOrderCard(context, orderProv.orders[index]);
+              return _buildOrderCard(context, orders[index]);
             },
           );
         },
@@ -98,7 +97,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Order #${order.orderId}',
+                  'Order #${order.orderId.length > 8 ? order.orderId.substring(0, 8) : order.orderId}',
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
@@ -145,6 +144,42 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ),
               ],
             ),
+
+            // Track Order button (only for active orders)
+            if (['pending', 'accepted', 'picked_up'].contains(order.status)) ...[
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    AppRouter.orderTracking,
+                    arguments: order.orderId,
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.secondaryColor,
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.location_on, size: 20, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'Track Order',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -152,38 +187,24 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   }
 
   Widget _statusBadge(String status) {
-    Color color;
-    String label;
-
-    switch (status) {
-      case 'pending':
-        color = AppTheme.warningAmber;
-        label = 'Pending';
-        break;
-      case 'confirmed':
-        color = Colors.blue;
-        label = 'Confirmed';
-        break;
-      case 'assigned':
-        color = Colors.indigo;
-        label = 'Rider Assigned';
-        break;
-      case 'picked_up':
-        color = Colors.teal;
-        label = 'Picked Up';
-        break;
-      case 'delivered':
-        color = AppTheme.successGreen;
-        label = 'Delivered';
-        break;
-      case 'cancelled':
-        color = AppTheme.errorRed;
-        label = 'Cancelled';
-        break;
-      default:
-        color = AppTheme.textMuted;
-        label = status;
-    }
+    final color = switch (status) {
+      'pending' => AppTheme.warningAmber,
+      'confirmed' => Colors.blue,
+      'accepted' => Colors.indigo,
+      'picked_up' => Colors.teal,
+      'delivered' => AppTheme.successGreen,
+      'cancelled' => AppTheme.errorRed,
+      _ => AppTheme.textMuted,
+    };
+    final label = switch (status) {
+      'pending' => 'Pending',
+      'confirmed' => 'Confirmed',
+      'accepted' => 'Rider Assigned',
+      'picked_up' => 'Picked Up',
+      'delivered' => 'Delivered ✅',
+      'cancelled' => 'Cancelled',
+      _ => status,
+    };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

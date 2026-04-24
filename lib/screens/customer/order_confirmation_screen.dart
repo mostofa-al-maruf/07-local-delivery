@@ -115,6 +115,24 @@ class OrderConfirmationScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // Buttons
+              if (lastOrder != null)
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.pushNamed(
+                      context,
+                      AppRouter.orderTracking,
+                      arguments: lastOrder.orderId,
+                    ),
+                    icon: const Icon(Icons.location_on),
+                    label: const Text('Track Order Live'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.secondaryColor,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 height: 50,

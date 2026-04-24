@@ -31,6 +31,9 @@ dependencies:
   flutter_map: ^6.1.0       # OpenStreetMap widget
   latlong2: ^0.9.0           # Lat/Lng data type
   geolocator: ^11.0.0       # GPS location
+  google_sign_in: ^6.2.1    # Google account login
+  url_launcher: ^6.2.5      # Open phone dialer, URLs
+  image_picker: ^1.0.7      # Pick photo from camera/gallery
 
   # Charts (Admin Dashboard)
   fl_chart: ^0.65.0          # Analytics charts

@@ -5,6 +5,7 @@
 ///   - Online/Offline toggle
 ///   - Real-time pending order stream from Firestore
 ///   - Accept order → Status progression → Delivery complete
+///   - Persistent delivery stats in Firestore
 ///
 /// Data Flow:
 ///   RiderHomeScreen → RiderProvider → OrderService
@@ -13,16 +14,19 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/order_model.dart';
 import '../services/order_service.dart';
 
 class RiderProvider extends ChangeNotifier {
   final OrderService _orderService = OrderService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// ── State Variables ───────────────────────────
   bool _isOnline = false;
   bool _isLoading = false;
   String? _errorMessage;
+  String? _riderId;
 
   // Current order the rider is assigned to
   OrderModel? _activeOrder;
@@ -34,7 +38,7 @@ class RiderProvider extends ChangeNotifier {
   StreamSubscription? _pendingOrdersSub;
   StreamSubscription? _activeOrderSub;
 
-  // Rider metrics (will be calculated from Firestore later)
+  // Rider metrics (persisted in Firestore)
   double _earningsToday = 0.0;
   int _totalDeliveries = 0;
   final double rating = 4.8;
@@ -88,13 +92,42 @@ class RiderProvider extends ChangeNotifier {
   }
 
   /// ──────────────────────────────────────────────
+  // Load rider stats from Firestore (called on go online)
+  /// ──────────────────────────────────────────────
+  Future<void> _loadRiderStats(String riderId) async {
+    try {
+      final doc = await _firestore.collection('users').doc(riderId).get();
+      if (doc.exists) {
+        _totalDeliveries = doc.data()?['totalDeliveries'] ?? 0;
+        _earningsToday = (doc.data()?['totalEarnings'] ?? 0).toDouble();
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  /// ──────────────────────────────────────────────
+  // Save rider stats to Firestore
+  /// ──────────────────────────────────────────────
+  Future<void> _saveRiderStats() async {
+    if (_riderId == null) return;
+    try {
+      await _firestore.collection('users').doc(_riderId).update({
+        'totalDeliveries': _totalDeliveries,
+        'totalEarnings': _earningsToday,
+      });
+    } catch (_) {}
+  }
+
+  /// ──────────────────────────────────────────────
   // Toggle Online/Offline Status
   /// ──────────────────────────────────────────────
   void toggleOnlineStatus(bool value, String riderId) {
     _isOnline = value;
+    _riderId = riderId;
     notifyListeners();
 
     if (_isOnline) {
+      _loadRiderStats(riderId);
       _startListeningForOrders();
       _startListeningForActiveOrder(riderId);
     } else {
@@ -173,21 +206,24 @@ class RiderProvider extends ChangeNotifier {
   Future<void> progressOrderStatus() async {
     if (_activeOrder == null || nextStatus == null) return;
 
+    // Save values BEFORE async call (stream may null _activeOrder after update)
+    final targetStatus = nextStatus!;
+    final orderId = _activeOrder!.orderId;
+    final fee = _activeOrder!.deliveryFee;
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      await _orderService.updateOrderStatus(
-        _activeOrder!.orderId,
-        nextStatus!,
-      );
+      await _orderService.updateOrderStatus(orderId, targetStatus);
 
-      // If delivered, update local metrics
-      if (nextStatus == 'delivered') {
+      // If delivered, update local metrics and save to Firestore
+      if (targetStatus == 'delivered') {
         _totalDeliveries++;
-        _earningsToday += _activeOrder!.deliveryFee;
+        _earningsToday += fee;
         _activeOrder = null;
+        await _saveRiderStats(); // Persist to Firestore!
       }
       // The stream will automatically update for non-delivered statuses
     } catch (e) {

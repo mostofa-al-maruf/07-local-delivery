@@ -14,6 +14,7 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
 
 class AuthService {
@@ -139,39 +140,42 @@ class AuthService {
   }
 
   /// ──────────────────────────────────────────────
-  // Sign Out
+  // Sign Out (clears both Firebase + Google sessions)
   /// ──────────────────────────────────────────────
   Future<void> signOut() async {
+    // Clear Google session so account picker appears next time
+    try {
+      await GoogleSignIn().signOut();
+    } catch (_) {}
     await _auth.signOut();
   }
 
   // ══════════════════════════════════════════════
-  //  EMAIL/PASSWORD AUTH (Milestone 3 — Secondary Login)
+  //  GOOGLE SIGN-IN (Milestone 3 — Secondary Login)
   // ══════════════════════════════════════════════
 
   /// ──────────────────────────────────────────────
-  // Sign in with Email & Password
+  // Sign in with Google Account
   /// ──────────────────────────────────────────────
-  Future<UserCredential> signInWithEmail({
-    required String email,
-    required String password,
-  }) async {
-    return await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-  }
+  // Opens the Google account picker, gets credentials,
+  // and signs into Firebase with those credentials.
+  Future<UserCredential> signInWithGoogle() async {
+    // 1. Trigger the Google Sign-In flow (account picker)
+    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) {
+      throw Exception('Google Sign-In was cancelled.');
+    }
 
-  /// ──────────────────────────────────────────────
-  // Register with Email & Password
-  /// ──────────────────────────────────────────────
-  Future<UserCredential> registerWithEmail({
-    required String email,
-    required String password,
-  }) async {
-    return await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
+    // 2. Get auth details from the Google account
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+    // 3. Create a Firebase credential from Google tokens
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
     );
+
+    // 4. Sign in to Firebase with the Google credential
+    return await _auth.signInWithCredential(credential);
   }
 }

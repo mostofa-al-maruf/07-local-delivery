@@ -10,10 +10,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 
 import '../../config/app_theme.dart';
 import '../../config/app_router.dart';
+import '../../services/auth_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/rider_provider.dart';
 
@@ -41,6 +43,13 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
     super.dispose();
   }
 
+  void _callPhone(String phone) async {
+    final uri = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final riderInfo = context.watch<RiderProvider>();
@@ -55,7 +64,12 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
           children: [
             CircleAvatar(
               backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-              child: const Icon(Icons.person, color: AppTheme.primaryColor),
+              backgroundImage: AuthService().currentUser?.photoURL != null
+                  ? NetworkImage(AuthService().currentUser!.photoURL!)
+                  : null,
+              child: AuthService().currentUser?.photoURL == null
+                  ? const Icon(Icons.person, color: AppTheme.primaryColor)
+                  : null,
             ),
             const SizedBox(width: 12),
             Column(
@@ -83,6 +97,11 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline, color: AppTheme.primaryColor),
+            tooltip: 'Edit Profile',
+            onPressed: () => Navigator.pushNamed(context, AppRouter.profile),
+          ),
           IconButton(
             icon: const Icon(Icons.logout, color: AppTheme.errorRed),
             onPressed: () {
@@ -501,7 +520,39 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
                 const SizedBox(height: 10),
                 _buildOrderInfoRow(Icons.person, 'Customer', order.customerName),
                 const SizedBox(height: 10),
-                _buildOrderInfoRow(Icons.phone, 'Phone', order.customerPhone),
+                GestureDetector(
+                  onTap: () => _callPhone(order.customerPhone),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.phone, color: AppTheme.successGreen, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Phone', style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+                            Text(order.customerPhone, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.successGreen.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.call, size: 14, color: AppTheme.successGreen),
+                            SizedBox(width: 4),
+                            Text('Call', style: TextStyle(color: AppTheme.successGreen, fontWeight: FontWeight.bold, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 10),
                 _buildOrderInfoRow(Icons.location_on, 'Address', order.deliveryAddress),
                 const SizedBox(height: 10),

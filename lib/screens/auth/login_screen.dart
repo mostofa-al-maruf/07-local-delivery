@@ -1,17 +1,13 @@
 /// ============================================================
-/// login_screen.dart — Phone Number Entry Screen
+/// login_screen.dart — Phone + Google Login Screen
 /// ============================================================
-/// First step of OTP authentication:
-///   1. User enters their phone number (+880 prefix)
-///   2. Taps "Send OTP" → triggers Firebase Phone Auth
-///   3. On success → navigates to OTP verification screen
-//
+/// Two authentication methods:
+///   1. Phone OTP (primary) — Firebase Phone Auth
+///   2. Google Sign-In (secondary) — One-tap Google login
+///
 /// Data Flow:
-///   User types phone → "Send OTP" tap
-///     → AuthProvider.sendOTP(phone)
-///     → AuthService.sendOTP() → Firebase Auth
-///     → SMS dispatched → AuthProvider.isOTPSent = true
-///     → Navigator.push(OTPScreen)
+///   Phone: User types phone → "Send OTP" → OTP Screen → Verified
+///   Google: User taps "Sign in with Google" → Google Picker → Verified
 /// ============================================================
 
 import 'package:flutter/material.dart';
@@ -31,22 +27,16 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  String _selectedRole = 'customer'; // Toggle between customer and rider
-  bool _useEmailLogin = false; // Toggle between phone and email
-  bool _isRegisterMode = false; // Toggle between login and register
+  String _selectedRole = 'customer';
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
-  // Validates phone and triggers OTP send
+  // ── Phone OTP Flow ──
   void _handleSendOTP() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -54,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final authProvider = context.read<AuthProvider>();
     await authProvider.sendOTP(
-      phone, 
+      phone,
       _selectedRole,
       onSuccess: () {
         if (mounted) {
@@ -75,27 +65,10 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Handles email login/register
-  void _handleEmailAuth() async {
-    if (!_formKey.currentState!.validate()) return;
-
+  // ── Google Sign-In Flow ──
+  void _handleGoogleSignIn() async {
     final authProvider = context.read<AuthProvider>();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-
-    if (_isRegisterMode) {
-      await authProvider.registerWithEmail(
-        email: email,
-        password: password,
-        role: _selectedRole,
-      );
-    } else {
-      await authProvider.signInWithEmail(
-        email: email,
-        password: password,
-        role: _selectedRole,
-      );
-    }
+    await authProvider.signInWithGoogle(role: _selectedRole);
 
     if (!mounted) return;
     if (authProvider.errorMessage != null) {
@@ -166,9 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _useEmailLogin
-                          ? 'Sign in with your email address'
-                          : 'Enter your mobile number to continue',
+                      'Enter your mobile number to continue',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppTheme.textMuted,
                           ),
@@ -191,117 +162,43 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 32),
 
-                    /// ── Login Method Toggle ─────────
-                    Center(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildMethodTab('Phone', Icons.phone, !_useEmailLogin, () {
-                              setState(() => _useEmailLogin = false);
-                            }),
-                            _buildMethodTab('Email', Icons.email, _useEmailLogin, () {
-                              setState(() => _useEmailLogin = true);
-                            }),
-                          ],
-                        ),
-                      ),
+                    /// ── Phone Number Input ───────────
+                    Text(
+                      'Mobile Number',
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 24),
-
-                    /// ── Conditional Input Fields ─────
-                    if (!_useEmailLogin) ...[
-                      /// ── Phone Number Input ───────────
-                      Text(
-                        'Mobile Number',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        maxLength: 10,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        decoration: InputDecoration(
-                          prefixIcon: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 14),
-                            child: Text(
-                              '+880',
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textDark,
-                              ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      maxLength: 10,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: InputDecoration(
+                        prefixIcon: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
+                          child: Text(
+                            '+880',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textDark,
                             ),
                           ),
-                          hintText: '1XXXXXXXXX',
-                          counterText: '',
                         ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter your phone number';
-                          }
-                          if (value.trim().length != 10) {
-                            return 'Enter a valid 10-digit number';
-                          }
-                          return null;
-                        },
+                        hintText: '1XXXXXXXXX',
+                        counterText: '',
                       ),
-                    ] else ...[
-                      /// ── Email Input ───────────────────
-                      Text(
-                        'Email Address',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.email_outlined),
-                          hintText: 'your@email.com',
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter your email';
-                          }
-                          if (!value.contains('@') || !value.contains('.')) {
-                            return 'Enter a valid email address';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      /// ── Password Input ────────────────
-                      Text(
-                        'Password',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.lock_outline),
-                          hintText: '••••••',
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter your password';
-                          }
-                          if (value.trim().length < 6) {
-                            return 'Password must be at least 6 characters';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter your phone number';
+                        }
+                        if (value.trim().length != 10) {
+                          return 'Enter a valid 10-digit number';
+                        }
+                        return null;
+                      },
+                    ),
                     const SizedBox(height: 16),
 
                     /// ── Error Message ────────────────
@@ -329,14 +226,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     const SizedBox(height: 24),
 
-                    /// ── Action Button ──────────────
+                    /// ── Send OTP Button ──────────────
                     SizedBox(
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: auth.isLoading
-                            ? null
-                            : (_useEmailLogin ? _handleEmailAuth : _handleSendOTP),
+                        onPressed: auth.isLoading ? null : _handleSendOTP,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.accentOrange,
                         ),
@@ -350,30 +245,84 @@ class _LoginScreenState extends State<LoginScreen> {
                                       Colors.white),
                                 ),
                               )
-                            : Text(_useEmailLogin
-                                ? (_isRegisterMode ? 'Create Account →' : 'Sign In →')
-                                : 'Send OTP →'),
+                            : const Text('Send OTP →'),
                       ),
                     ),
 
-                    /// ── Toggle Register/Login for Email ──
-                    if (_useEmailLogin) ...[
-                      const SizedBox(height: 16),
+                    // Cancel button when loading (escape stuck state)
+                    if (auth.isLoading) ...[
+                      const SizedBox(height: 12),
                       Center(
                         child: TextButton(
                           onPressed: () {
-                            setState(() => _isRegisterMode = !_isRegisterMode);
+                            auth.clearError();
+                            auth.cancelLoading();
                           },
-                          child: Text(
-                            _isRegisterMode
-                                ? 'Already have an account? Sign In'
-                                : "Don't have an account? Register",
-                            style: TextStyle(color: AppTheme.primaryColor),
-                          ),
+                          child: const Text('Cancel',
+                              style: TextStyle(color: AppTheme.textMuted)),
                         ),
                       ),
                     ],
                     const SizedBox(height: 24),
+
+                    /// ── Divider ──────────────────────
+                    Row(
+                      children: [
+                        Expanded(child: Divider(color: Colors.grey.shade300)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'or',
+                            style: TextStyle(
+                              color: AppTheme.textMuted,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        Expanded(child: Divider(color: Colors.grey.shade300)),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    /// ── Google Sign-In Button ────────
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: OutlinedButton(
+                        onPressed: auth.isLoading ? null : _handleGoogleSignIn,
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.network(
+                              'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                              width: 24,
+                              height: 24,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.g_mobiledata,
+                                size: 28,
+                                color: Colors.red,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Continue with Google',
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
 
                     /// ── Terms ────────────────────────
                     Center(
@@ -389,31 +338,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             );
           },
-        ),
-      ),
-    );
-  }
-
-  // Builds a login method tab (Phone / Email)
-  Widget _buildMethodTab(String label, IconData icon, bool isSelected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: isSelected ? Colors.white : AppTheme.textMuted),
-            const SizedBox(width: 8),
-            Text(label, style: TextStyle(
-              color: isSelected ? Colors.white : AppTheme.textMuted,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            )),
-          ],
         ),
       ),
     );

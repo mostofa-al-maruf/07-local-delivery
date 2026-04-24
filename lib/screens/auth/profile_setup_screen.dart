@@ -21,6 +21,7 @@ class ProfileSetupScreen extends StatefulWidget {
 class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   void _handleSaveProfile() async {
@@ -30,6 +31,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     await authProvider.createProfile(
       name: _nameController.text.trim(),
       address: _addressController.text.trim(),
+      phone: _phoneController.text.trim(),
     );
 
     if (mounted) {
@@ -56,7 +58,20 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   void dispose() {
     _nameController.dispose();
     _addressController.dispose();
+    _phoneController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill phone if user logged in via Phone OTP
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final phone = context.read<AuthProvider>().phoneNumber;
+      if (phone.isNotEmpty) {
+        _phoneController.text = phone;
+      }
+    });
   }
 
   @override
@@ -72,7 +87,27 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 60),
+                    const SizedBox(height: 20),
+
+                    /// ── Back to Login ───────────────
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () async {
+                          await context.read<AuthProvider>().signOut();
+                          if (context.mounted) {
+                            Navigator.pushNamedAndRemoveUntil(
+                                context, AppRouter.login, (route) => false);
+                          }
+                        },
+                        icon: const Icon(Icons.arrow_back, size: 18),
+                        label: const Text('Back to Login'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppTheme.textMuted,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
 
                     /// ── Header ──────────────────────
                     Text(
@@ -156,13 +191,29 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    /// ── Phone Display ────────────────
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.phone, color: AppTheme.successGreen),
-                      title: Text(auth.phoneNumber),
-                      subtitle: const Text('Verified ✓',
-                          style: TextStyle(color: AppTheme.successGreen)),
+                    /// ── Phone Number Input ──────────
+                    Text('Phone Number',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: InputDecoration(
+                        hintText: '01XXXXXXXXX',
+                        prefixIcon: const Icon(Icons.phone_outlined),
+                        suffixIcon: auth.phoneNumber.isNotEmpty
+                            ? const Icon(Icons.verified, color: AppTheme.successGreen, size: 20)
+                            : null,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter your phone number';
+                        }
+                        if (value.trim().length < 10) {
+                          return 'Enter a valid phone number';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 32),
 
