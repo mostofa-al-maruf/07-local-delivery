@@ -15,6 +15,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 
 class AuthService {
@@ -160,22 +161,25 @@ class AuthService {
   // Opens the Google account picker, gets credentials,
   // and signs into Firebase with those credentials.
   Future<UserCredential> signInWithGoogle() async {
-    // 1. Trigger the Google Sign-In flow (account picker)
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-    if (googleUser == null) {
-      throw Exception('Google Sign-In was cancelled.');
+    if (kIsWeb) {
+      // For Web, use Firebase's built-in popup (handles clientId automatically)
+      GoogleAuthProvider authProvider = GoogleAuthProvider();
+      return await _auth.signInWithPopup(authProvider);
+    } else {
+      // For Android/iOS, use the google_sign_in package
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        throw Exception('Google Sign-In was cancelled.');
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      return await _auth.signInWithCredential(credential);
     }
-
-    // 2. Get auth details from the Google account
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-    // 3. Create a Firebase credential from Google tokens
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-
-    // 4. Sign in to Firebase with the Google credential
-    return await _auth.signInWithCredential(credential);
   }
 }
