@@ -195,6 +195,7 @@ class AuthProvider extends ChangeNotifier {
       phone: userPhone,
       name: name,
       email: _authService.currentUser!.email ?? '',
+      profileImageUrl: _authService.currentUser!.photoURL ?? '',
       role: _selectedRole,
       address: address,
     );
