@@ -19,7 +19,7 @@ import 'providers/shop_provider.dart';
 import 'providers/product_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'utils/seeder.dart';
+
 
 import 'providers/cart_provider.dart';
 import 'providers/order_provider.dart';
@@ -44,7 +44,7 @@ void main() async {
     );
     
     // Seed Firestore with Demo Data (runs once to populate DB)
-    await FirebaseSeeder.seedDemoData();
+    // await FirebaseSeeder.seedDemoData();
 
     // Initialize local notifications
     await NotificationService().initialize();

@@ -6,6 +6,7 @@
 ///   - Shops Panel (manage shop listings)
 ///   - Analytics Panel (revenue, commission, charts)
 /// ============================================================
+library;
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -60,21 +61,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 // Logo
                 if (isWide)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
                     child: Row(
                       children: [
-                        const Icon(Icons.admin_panel_settings, color: Colors.white, size: 28),
+                        const Icon(Icons.admin_panel_settings,
+                            color: Colors.white, size: 28),
                         const SizedBox(width: 12),
                         Text('Admin Panel',
                             style: GoogleFonts.poppins(
-                                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16)),
                       ],
                     ),
                   )
                 else
                   const Padding(
                     padding: EdgeInsets.all(16),
-                    child: Icon(Icons.admin_panel_settings, color: Colors.white, size: 28),
+                    child: Icon(Icons.admin_panel_settings,
+                        color: Colors.white, size: 28),
                   ),
                 const Divider(color: Colors.white24),
                 const SizedBox(height: 8),
@@ -86,16 +92,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   return InkWell(
                     onTap: () => setState(() => _selectedTab = index),
                     child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 4),
                       padding: EdgeInsets.symmetric(
                           horizontal: isWide ? 16 : 0, vertical: 14),
                       decoration: BoxDecoration(
-                        color: isSelected ? Colors.white.withValues(alpha: 0.15) : null,
+                        color: isSelected
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : null,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
-                        mainAxisAlignment:
-                            isWide ? MainAxisAlignment.start : MainAxisAlignment.center,
+                        mainAxisAlignment: isWide
+                            ? MainAxisAlignment.start
+                            : MainAxisAlignment.center,
                         children: [
                           Icon(item.icon, color: Colors.white, size: 22),
                           if (isWide) ...[
@@ -103,8 +113,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             Text(item.label,
                                 style: TextStyle(
                                     color: Colors.white,
-                                    fontWeight:
-                                        isSelected ? FontWeight.bold : FontWeight.normal)),
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal)),
                           ],
                         ],
                       ),
@@ -124,13 +135,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   child: Padding(
                     padding: const EdgeInsets.all(20),
                     child: Row(
-                      mainAxisAlignment:
-                          isWide ? MainAxisAlignment.start : MainAxisAlignment.center,
+                      mainAxisAlignment: isWide
+                          ? MainAxisAlignment.start
+                          : MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.logout, color: Colors.white70, size: 20),
+                        const Icon(Icons.logout,
+                            color: Colors.white70, size: 20),
                         if (isWide) ...[
                           const SizedBox(width: 12),
-                          const Text('Logout', style: TextStyle(color: Colors.white70)),
+                          const Text('Logout',
+                              style: TextStyle(color: Colors.white70)),
                         ],
                       ],
                     ),
@@ -174,9 +188,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
       stream: _orderService.streamAllOrders(),
       builder: (context, snapshot) {
         final orders = snapshot.data ?? [];
-        final totalSales = orders.fold<double>(0, (sum, o) => sum + o.totalAmount);
-        final commission = orders.fold<double>(0, (sum, o) => sum + o.platformFee);
-        final deliveredCount = orders.where((o) => o.status == 'delivered').length;
+        final totalSales =
+            orders.fold<double>(0, (total, o) => total + o.totalAmount);
+        final commission =
+            orders.fold<double>(0, (total, o) => total + o.platformFee);
+        final deliveredCount =
+            orders.where((o) => o.status == 'delivered').length;
         final pendingCount = orders.where((o) => o.status == 'pending').length;
 
         return SingleChildScrollView(
@@ -184,9 +201,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Dashboard', style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold)),
+              Text('Dashboard',
+                  style: GoogleFonts.poppins(
+                      fontSize: 28, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              Text('Platform Overview', style: TextStyle(color: AppTheme.textMuted, fontSize: 14)),
+              const Text('Platform Overview',
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 14)),
               const SizedBox(height: 32),
 
               // Stat Cards
@@ -194,10 +214,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 spacing: 20,
                 runSpacing: 20,
                 children: [
-                  _buildStatCard('Total Sales', '৳${totalSales.toStringAsFixed(0)}',
-                      Icons.trending_up, AppTheme.successGreen),
-                  _buildStatCard('Commission', '৳${commission.toStringAsFixed(0)}',
-                      Icons.account_balance, AppTheme.primaryColor),
+                  _buildStatCard(
+                      'Total Sales',
+                      '৳${totalSales.toStringAsFixed(0)}',
+                      Icons.trending_up,
+                      AppTheme.successGreen),
+                  _buildStatCard(
+                      'Commission',
+                      '৳${commission.toStringAsFixed(0)}',
+                      Icons.account_balance,
+                      AppTheme.primaryColor),
                   _buildStatCard('Delivered', '$deliveredCount',
                       Icons.check_circle, AppTheme.secondaryColor),
                   _buildStatCard('Pending', '$pendingCount',
@@ -209,7 +235,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
               // Revenue Chart
               Text('Revenue Breakdown',
-                  style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600)),
+                  style: GoogleFonts.poppins(
+                      fontSize: 18, fontWeight: FontWeight.w600)),
               const SizedBox(height: 20),
               SizedBox(
                 height: 250,
@@ -222,14 +249,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       width: 220,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppTheme.cardWhite,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,19 +273,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(height: 16),
-          Text(value, style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(value,
+              style: GoogleFonts.poppins(
+                  fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text(title, style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+          Text(title,
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
         ],
       ),
     );
   }
 
   Widget _buildRevenueChart(List<OrderModel> orders) {
-    final delivered = orders.where((o) => o.status == 'delivered').length.toDouble();
-    final accepted = orders.where((o) => o.status == 'accepted').length.toDouble();
-    final pending = orders.where((o) => o.status == 'pending').length.toDouble();
-    final pickedUp = orders.where((o) => o.status == 'picked_up').length.toDouble();
+    final delivered =
+        orders.where((o) => o.status == 'delivered').length.toDouble();
+    final accepted =
+        orders.where((o) => o.status == 'accepted').length.toDouble();
+    final pending =
+        orders.where((o) => o.status == 'pending').length.toDouble();
+    final pickedUp =
+        orders.where((o) => o.status == 'picked_up').length.toDouble();
 
     if (delivered + accepted + pending + pickedUp == 0) {
       return const Center(child: Text('No orders yet'));
@@ -269,10 +306,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
               sectionsSpace: 2,
               centerSpaceRadius: 40,
               sections: [
-                if (delivered > 0) PieChartSectionData(value: delivered, color: AppTheme.successGreen, showTitle: false),
-                if (accepted > 0) PieChartSectionData(value: accepted, color: AppTheme.primaryColor, showTitle: false),
-                if (pending > 0) PieChartSectionData(value: pending, color: AppTheme.warningAmber, showTitle: false),
-                if (pickedUp > 0) PieChartSectionData(value: pickedUp, color: AppTheme.accentOrange, showTitle: false),
+                if (delivered > 0)
+                  PieChartSectionData(
+                      value: delivered,
+                      color: AppTheme.successGreen,
+                      showTitle: false),
+                if (accepted > 0)
+                  PieChartSectionData(
+                      value: accepted,
+                      color: AppTheme.primaryColor,
+                      showTitle: false),
+                if (pending > 0)
+                  PieChartSectionData(
+                      value: pending,
+                      color: AppTheme.warningAmber,
+                      showTitle: false),
+                if (pickedUp > 0)
+                  PieChartSectionData(
+                      value: pickedUp,
+                      color: AppTheme.accentOrange,
+                      showTitle: false),
               ],
             ),
           ),
@@ -297,7 +350,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 4),
         Text(title, style: const TextStyle(fontSize: 12)),
       ],
@@ -321,9 +377,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('All Orders', style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold)),
+              Text('All Orders',
+                  style: GoogleFonts.poppins(
+                      fontSize: 28, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              Text('${orders.length} total orders', style: TextStyle(color: AppTheme.textMuted)),
+              Text('${orders.length} total orders',
+                  style: const TextStyle(color: AppTheme.textMuted)),
               const SizedBox(height: 24),
               Expanded(
                 child: ListView.builder(
@@ -358,77 +417,107 @@ class _AdminDashboardState extends State<AdminDashboard> {
       decoration: BoxDecoration(
         color: AppTheme.cardWhite,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8)
+        ],
       ),
-      child: isWide 
-      ? Row(
-        children: [
-          Container(
-            width: 44, height: 44,
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(Icons.receipt, color: statusColor, size: 22),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
+      child: isWide
+          ? Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.receipt, color: statusColor, size: 22),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                          '#${order.orderId.substring(0, 6)} • ${order.shopName}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 4),
+                      Text(
+                          '${order.customerName} • ${DateFormat('MMM dd, hh:mm a').format(order.placedAt)}',
+                          style: const TextStyle(
+                              color: AppTheme.textMuted, fontSize: 12),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
+                ),
+                Text('৳${order.totalAmount.toStringAsFixed(0)}',
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(width: 16),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(order.status.toUpperCase().replaceAll('_', ' '),
+                      style: TextStyle(
+                          color: statusColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11)),
+                ),
+              ],
+            )
+          : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('#${order.orderId.substring(0, 6)} • ${order.shopName}',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text('${order.customerName} • ${DateFormat('MMM dd, hh:mm a').format(order.placedAt)}',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                          '#${order.orderId.substring(0, 6)} • ${order.shopName}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                    const SizedBox(width: 8),
+                    Text('৳${order.totalAmount.toStringAsFixed(0)}',
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                          '${order.customerName} • ${DateFormat('MMM dd').format(order.placedAt)}',
+                          style: const TextStyle(
+                              color: AppTheme.textMuted, fontSize: 12),
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                          order.status.toUpperCase().replaceAll('_', ' '),
+                          style: TextStyle(
+                              color: statusColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10)),
+                    ),
+                  ],
+                ),
               ],
             ),
-          ),
-          Text('৳${order.totalAmount.toStringAsFixed(0)}',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(width: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(order.status.toUpperCase().replaceAll('_', ' '),
-                style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 11)),
-          ),
-        ],
-      )
-      : Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('#${order.orderId.substring(0, 6)} • ${order.shopName}',
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text('৳${order.totalAmount.toStringAsFixed(0)}',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('${order.customerName} • ${DateFormat('MMM dd').format(order.placedAt)}',
-                  style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(order.status.toUpperCase().replaceAll('_', ' '),
-                    style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 10)),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
@@ -449,9 +538,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Shop Listings', style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold)),
+              Text('Shop Listings',
+                  style: GoogleFonts.poppins(
+                      fontSize: 28, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              Text('${shops.length} registered shops', style: TextStyle(color: AppTheme.textMuted)),
+              Text('${shops.length} registered shops',
+                  style: const TextStyle(color: AppTheme.textMuted)),
               const SizedBox(height: 24),
               Expanded(
                 child: ListView.builder(
@@ -469,8 +561,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       child: Row(
                         children: [
                           CircleAvatar(
-                            backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                            child: const Icon(Icons.store, color: AppTheme.primaryColor),
+                            backgroundColor:
+                                AppTheme.primaryColor.withValues(alpha: 0.1),
+                            child: const Icon(Icons.store,
+                                color: AppTheme.primaryColor),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -478,23 +572,42 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(data['shopName'] ?? 'Unknown',
-                                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                                Text(data['category'] ?? '', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1),
+                                Text(data['category'] ?? '',
+                                    style: const TextStyle(
+                                        color: AppTheme.textMuted,
+                                        fontSize: 12),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1),
                               ],
                             ),
                           ),
-                          Text('★ ${(data['rating'] ?? 0).toStringAsFixed(1)}',
-                              style: const TextStyle(color: AppTheme.warningAmber, fontWeight: FontWeight.bold)),
-                          const SizedBox(width: 16),
-                          Switch(
-                            value: isActive,
-                            activeColor: AppTheme.successGreen,
-                            onChanged: (val) {
-                              FirebaseFirestore.instance
-                                  .collection('shops')
-                                  .doc(shops[index].id)
-                                  .update({'isActive': val});
-                            },
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                  '★ ${(data['rating'] ?? 0).toStringAsFixed(1)}',
+                                  style: const TextStyle(
+                                      color: AppTheme.warningAmber,
+                                      fontWeight: FontWeight.bold)),
+                              SizedBox(
+                                height: 30,
+                                child: Switch(
+                                  value: isActive,
+                                  activeThumbColor: AppTheme.successGreen,
+                                  onChanged: (val) {
+                                    FirebaseFirestore.instance
+                                        .collection('shops')
+                                        .doc(shops[index].id)
+                                        .update({'isActive': val});
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -508,12 +621,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
       },
     );
   }
+
   // ════════════════════════════════════════════════
   //  RIDERS PANEL
   // ════════════════════════════════════════════════
   Widget _buildRidersPanel() {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'rider').snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'rider')
+          .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -525,9 +642,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Delivery Partners', style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold)),
+              Text('Delivery Partners',
+                  style: GoogleFonts.poppins(
+                      fontSize: 28, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              Text('${riders.length} registered riders', style: TextStyle(color: AppTheme.textMuted)),
+              Text('${riders.length} registered riders',
+                  style: const TextStyle(color: AppTheme.textMuted)),
               const SizedBox(height: 24),
               Expanded(
                 child: ListView.builder(
@@ -537,7 +657,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     final isActive = data['isActive'] ?? true;
                     final deliveries = data['totalDeliveries'] ?? 0;
                     final earnings = data['totalEarnings'] ?? 0;
-                    
+
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(16),
@@ -548,8 +668,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       child: Row(
                         children: [
                           CircleAvatar(
-                            backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                            child: const Icon(Icons.pedal_bike, color: AppTheme.primaryColor),
+                            backgroundColor:
+                                AppTheme.primaryColor.withValues(alpha: 0.1),
+                            child: const Icon(Icons.pedal_bike,
+                                color: AppTheme.primaryColor),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -557,25 +679,45 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(data['name'] ?? 'Unknown Rider',
-                                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                                Text(data['phone'] ?? 'No phone', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1),
+                                Text(data['phone'] ?? 'No phone',
+                                    style: const TextStyle(
+                                        color: AppTheme.textMuted,
+                                        fontSize: 12),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1),
                               ],
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text('$deliveries Deliveries', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                              Text('৳$earnings Earned', style: const TextStyle(color: AppTheme.successGreen, fontSize: 12)),
+                              Text('$deliveries Deliveries',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12)),
+                              Text('৳$earnings Earned',
+                                  style: const TextStyle(
+                                      color: AppTheme.successGreen,
+                                      fontSize: 11)),
+                              SizedBox(
+                                height: 30,
+                                child: Switch(
+                                  value: isActive,
+                                  activeThumbColor: AppTheme.successGreen,
+                                  onChanged: (val) {
+                                    FirebaseFirestore.instance
+                                        .collection('users')
+                                        .doc(riders[index].id)
+                                        .update({'isActive': val});
+                                  },
+                                ),
+                              ),
                             ],
-                          ),
-                          const SizedBox(width: 16),
-                          Switch(
-                            value: isActive,
-                            activeColor: AppTheme.successGreen,
-                            onChanged: (val) {
-                              FirebaseFirestore.instance.collection('users').doc(riders[index].id).update({'isActive': val});
-                            },
                           ),
                         ],
                       ),
@@ -599,11 +741,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Global Settings', style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold)),
+          Text('Global Settings',
+              style: GoogleFonts.poppins(
+                  fontSize: 28, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Text('Manage app-wide configurations', style: TextStyle(color: AppTheme.textMuted)),
+          const Text('Manage app-wide configurations',
+              style: TextStyle(color: AppTheme.textMuted)),
           const SizedBox(height: 32),
-          
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
@@ -616,16 +760,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.account_balance_wallet, color: AppTheme.primaryColor),
+                    const Icon(Icons.account_balance_wallet,
+                        color: AppTheme.primaryColor),
                     const SizedBox(width: 12),
-                    Text('Platform Commission Fee', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
+                    Expanded(
+                      child: Text('Platform Commission Fee',
+                          style: GoogleFonts.poppins(
+                              fontSize: 16, fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text('This flat fee is added to every order as the platform\'s revenue. Currently hardcoded to ৳5 in checkout. Future update will sync this to Firestore.', 
-                     style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                const Text(
+                    'This flat fee is added to every order as the platform\'s revenue. Currently hardcoded to ৳5 in checkout. Future update will sync this to Firestore.',
+                    style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
                 const SizedBox(height: 24),
-                Row(
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     SizedBox(
                       width: 150,
@@ -639,18 +793,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
                     ElevatedButton(
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Settings saved. (Firestore sync planned for Phase 2)'))
-                        );
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text(
+                                'Settings saved. (Firestore sync planned for Phase 2)')));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 20),
                       ),
-                      child: const Text('Update Fee', style: TextStyle(color: Colors.white)),
+                      child: const Text('Update Fee',
+                          style: TextStyle(color: Colors.white)),
                     ),
                   ],
                 ),
