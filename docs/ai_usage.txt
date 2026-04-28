@@ -1,0 +1,59 @@
+============================================================
+           AI USAGE DECLARATION
+============================================================
+
+Name: Mahmud Mostofa Al Maruf
+Student ID: 22101132
+Assignment: CSE 489 Final Project (07 Local Delivery)
+Date: April 28, 2026
+
+------------------------------------------------------------
+1. AI TOOLS USED (check all that apply)
+------------------------------------------------------------
+[ ] None
+[ ] ChatGPT
+[ ] GitHub Copilot
+[x] Google Gemini
+[ ] Claude
+[ ] Cursor
+[ ] Other: ________________
+
+------------------------------------------------------------
+2. PURPOSE OF AI USE (check all that apply)
+------------------------------------------------------------
+[x] Learning/understanding concepts
+[x] Debugging my code
+[x] Generating code snippets
+[ ] Writing text content
+[x] Design/styling ideas
+[ ] Image generation
+[ ] Other: ________________
+
+------------------------------------------------------------
+3. DESCRIPTION OF AI USE
+------------------------------------------------------------
+Briefly describe what you used AI for and how:
+Used Google Gemini to debug and fix complex RenderFlex overflow issues in the Admin Web Dashboard, configure Firebase Firestore security rules, design responsive UI layouts using MediaQuery, and implement atomic batch writes for the checkout process to prevent data corruption.
+
+------------------------------------------------------------
+4. AI-ASSISTED SECTIONS
+------------------------------------------------------------
+List specific files/sections where AI helped significantly:
+
+File: lib/screens/admin/admin_dashboard.dart    Section: Fixed RenderFlex overflow and responsive web layout
+File: lib/services/order_service.dart           Section: Implemented Firestore Batch Writes for checkout
+File: firestore.rules                           Section: Enforced authenticated access security rules
+
+------------------------------------------------------------
+5. DECLARATION
+------------------------------------------------------------
+I declare that:
+- This disclosure is complete and accurate
+- I understand all code in my submission
+- I can explain and modify my work if asked
+- I take full responsibility for my submission
+
+Signature: Mahmud Mostofa Al Maruf
+Date: April 28, 2026
+
+============================================================
